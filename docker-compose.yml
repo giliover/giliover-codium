@@ -1,0 +1,186 @@
+services:
+  giliover-streamlink:
+    container_name: giliover-streamlink
+    image: giliover-streamlink
+    stdin_open: true
+    tty: true
+    privileged: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.streamlink
+    network_mode: "host"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - /dev/snd:/dev/snd
+      - /run/dbus:/run/dbus
+      - /home/giliover/.mozilla:/home/ubuntu/.mozilla  # Montando o diretório do perfil do Firefox
+      - /home/giliover/.mozilla:/root/.mozilla  # Montando o diretório do perfil do Firefox
+    devices:
+      - /dev/snd
+      - /run/dbus
+    restart: no
+  giliover-codium:
+    container_name: giliover-codium
+    image: giliover-codium
+    stdin_open: true
+    tty: true
+    privileged: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.codium
+    network_mode: "host"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - /dev/snd:/dev/snd
+      - /home/giliover/:/home/ubuntu/
+    devices:
+      - /dev/snd
+    restart: no
+  giliover-mysql-work:
+    container_name: giliover-mysql-work
+    image: giliover-mysql-work
+    privileged: true
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.mysql-work
+    network_mode: "host"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - $GILIOVER/config:/config
+      - $GILIOVER/.mysql:/home/root/.mysql
+    devices:
+      - /dev/snd
+    restart: no
+  giliover-visual-paradigm:
+    container_name: giliover-visual-paradigm
+    image: giliover-visual-paradigm
+    privileged: true
+    stdin_open: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.visual-paradigm
+    network_mode: "host"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - $GILIOVER/config:/config
+      - $GILIOVER/.mysql:/home/root/.mysql
+    devices:
+      - /dev/snd
+    restart: no
+  giliover-session:
+    container_name: giliover-session
+    image: giliover-session
+    stdin_open: true
+    privileged: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.session
+    network_mode: host
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - /dev/snd:/dev/snd
+    devices:
+      - /dev/snd
+    restart: no
+  giliover-keepassxc:
+    container_name: giliover-keepassxc
+    image: giliover-keepassxc
+    stdin_open: true
+    privileged: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.keepassxc
+    network_mode: "host"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./database.keepassxc:/home/ubuntu/config
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - /dev/snd:/dev/snd
+    devices:
+      - /dev/snd
+    restart: no
+  giliover-searxng:
+    container_name: giliover-searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
+    network_mode: "host"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+  giliover-freetube:
+    container_name: giliover-freetube
+    image: giliover-freetube
+    stdin_open: true
+    privileged: true
+    tty: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    build:
+      context: .
+      dockerfile: ./Dockerfile.freetube
+    network_mode: "host"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /home/giliover/.config:/home/ubuntu/.config
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - /dev/snd:/dev/snd
+    devices:
+      - /dev/snd
+    restart: no
+  giliover-node:
+    container_name: giliover-node
+    image: giliover-node
+    entrypoint: "npm i && tail -f /dev/null"
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+      dockerfile: ./Dockerfile.node
+    network_mode: "host"
+    volumes:
+      - .:/giliover-node
+      - ./node_modules:/giliover-node/node_modules
+    devices:
+      - /dev/snd
+    restart: no
